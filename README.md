@@ -1,2 +1,3 @@
-# pink_pig_rampage_game
-🐷 Hành trình của một chú heo hồng dám mơ ước được bay cao. Tiếc rằng vũ trụ có nhiều thứ cứng đầu hơn cả ước mơ của nó.
+# Pink Pig Rampage
+
+🐷 Một chú heo. Một đôi cánh. Một ước mơ. Và một vấn đề tiêu hóa nghiêm trọng khiến nó bay được. Nhiệm vụ của bạn: giúp Béo luồn lách qua những cây cột hồng đỏng đảnh, đi càng xa càng tốt, trước khi định luật vật lý nhắc nhở rằng nó vẫn chỉ là một con heo. **Cảnh báo: gây nghiện và hơi nặng mùi.**

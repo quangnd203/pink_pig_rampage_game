@@ -5,7 +5,7 @@ let W, H;
 const GRAVITY = 504;      // px/s²  (= 0.14 × 60²)
 const FLAP = -240;        // px/s   (= -4 × 60)
 const PIPE_W = 64;
-const GAP = 160;
+const GAP = 165;
 const PIPE_SPEED = 150;   // px/s   (= 2.5 × 60)
 const PIPE_INTERVAL = 80 / 60; // giây giữa 2 ống (= 80 frames / 60fps)
 const GROUND_H = 45;
@@ -28,11 +28,12 @@ window.addEventListener('resize', () => {
 });
 
 let state = 'idle';
-let bird, pipes, score, best, frameCount, bgOffset, pipeTimer, lastTime;
+let bird, pipes, poops, score, best, frameCount, bgOffset, pipeTimer, lastTime;
 
 function initGame() {
   bird = { x: 80, y: H * 0.44, vy: 0, frame: 0, flapTimer: 0 };
   pipes = [];
+  poops = [];
   score = 0;
   frameCount = 0;
   bgOffset = 0;
@@ -135,6 +136,34 @@ function drawBird(x, y, flapState) {
   ctx.strokeRect(bx+20, by+8, 8, 9);
 }
 
+// Lợn ị ra phân khi vỗ cánh 💩 (bắn ra phía sau-dưới rồi rơi theo trọng lực)
+function spawnPoop() {
+  poops.push({
+    x: bird.x - 13,                  // phía sau mông lợn
+    y: bird.y + 8,                   // dưới bụng
+    vx: -50 - Math.random() * 40,    // bắn ngược ra sau
+    vy: 20 + Math.random() * 50,     // rơi xuống
+    size: 3.7 + Math.random() * 1.3,
+    life: 1.3                        // số giây tồn tại trước khi mờ hẳn
+  });
+}
+
+function drawPoop(p) {
+  const x = Math.round(p.x), y = Math.round(p.y), s = p.size;
+  ctx.globalAlpha = Math.min(1, p.life / 0.4); // mờ dần lúc sắp biến mất
+  // Bãi phân xếp tầng kiểu pixel
+  ctx.fillStyle = '#7a4a21';
+  ctx.beginPath(); ctx.ellipse(x, y, s, s * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#8c5a2b';
+  ctx.beginPath(); ctx.ellipse(x, y - s * 0.7, s * 0.72, s * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#9c662f';
+  ctx.beginPath(); ctx.ellipse(x, y - s * 1.25, s * 0.42, s * 0.42, 0, 0, Math.PI * 2); ctx.fill();
+  // Đốm sáng nhỏ cho có khối
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillRect(x - 1, Math.round(y - s * 1.4), 2, 2);
+  ctx.globalAlpha = 1;
+}
+
 // Pipe drawing with pixel Mario-style caps
 function drawPipe(px, topH, botY) {
   const capH = 18, capW = PIPE_W + 8, capX = px - 4;
@@ -196,10 +225,47 @@ function drawPipe(px, topH, botY) {
   ctx.fillRect(px + PIPE_W * 0.6, botY + capH, 4, bh);
 }
 
+// Vẽ một ngôi sao 4 cánh lấp lánh
+function drawStar(sx, sy, r, alpha) {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(sx, sy - r);
+  ctx.lineTo(sx + r * 0.26, sy - r * 0.26);
+  ctx.lineTo(sx + r, sy);
+  ctx.lineTo(sx + r * 0.26, sy + r * 0.26);
+  ctx.lineTo(sx, sy + r);
+  ctx.lineTo(sx - r * 0.26, sy + r * 0.26);
+  ctx.lineTo(sx - r, sy);
+  ctx.lineTo(sx - r * 0.26, sy - r * 0.26);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+}
+
 function drawBackground() {
   // Sky
   ctx.fillStyle = '#ffd9ec';
   ctx.fillRect(0, 0, W, H - GROUND_H);
+
+  // Sao lấp lánh rải rác trên trời (nhấp nháy nhẹ theo thời gian)
+  const stars = [
+    [W * 0.12, H * 0.14, 5],
+    [W * 0.28, H * 0.30, 3.5],
+    [W * 0.18, H * 0.52, 4],
+    [W * 0.40, H * 0.12, 4.5],
+    [W * 0.55, H * 0.22, 3],
+    [W * 0.70, H * 0.10, 5],
+    [W * 0.84, H * 0.28, 3.5],
+    [W * 0.92, H * 0.16, 4],
+    [W * 0.62, H * 0.50, 4.5],
+    [W * 0.33, H * 0.66, 3.5],
+    [W * 0.78, H * 0.62, 4]
+  ];
+  stars.forEach(([sx, sy, r], i) => {
+    const tw = 0.5 + 0.5 * Math.sin(frameCount * 2 + i * 1.3); // 0..1 nhấp nháy
+    drawStar(sx, sy, r * (0.7 + 0.3 * tw), 0.35 + 0.5 * tw);
+  });
 
   // Subtle cloud streaks
   ctx.strokeStyle = 'rgba(255,255,255,0.18)';
@@ -255,12 +321,42 @@ function drawScore() {
   ctx.fillText(score, W / 2, H * 0.2);
 }
 
+// Tách chữ thành nhiều dòng cho vừa chiều rộng cho trước
+function wrapText(text, maxWidth) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = w;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
 // Draw overlay boxes (Start/Dead)
 function drawOverlay(title, sub) {
-  const rectH = 200;
-  const rectW = Math.min(W - 80, 320);
+  const pad = 22;
+  const rectW = Math.min(W - 60, 320);
+  const innerW = rectW - pad * 2;
+
+  // Chuẩn bị các dòng chữ phụ (tự xuống dòng nếu dài)
+  ctx.font = '14px monospace';
+  // Tôn trọng chỗ ngắt dòng thủ công (\n), phần còn lại tự xuống dòng nếu vẫn dài
+  const subLines = sub.split('\n').flatMap(part => wrapText(part, innerW));
+
+  // Chiều cao khung co theo nội dung
+  let contentH = 30 + subLines.length * 20;        // tiêu đề + các dòng phụ
+  if (state === 'dead') contentH += 14 + 22 + 24;  // khoảng cách + điểm + nút chơi lại
+
+  const rectH = contentH + pad * 2;
   const rectX = (W - rectW) / 2;
-  const rectY = H / 2 - 100;
+  const rectY = (H - rectH) / 2;
 
   ctx.fillStyle = 'rgba(0,0,0,0.42)';
   ctx.fillRect(rectX, rectY, rectW, rectH);
@@ -268,23 +364,36 @@ function drawOverlay(title, sub) {
   ctx.lineWidth = 3;
   ctx.strokeRect(rectX, rectY, rectW, rectH);
 
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  let y = rectY + pad;
+
+  // Tiêu đề
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 20px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText(title, W / 2, rectY + 60);
+  ctx.fillText(title, W / 2, y);
+  y += 30;
 
+  // Chữ phụ (có thể nhiều dòng)
   ctx.font = '14px monospace';
   ctx.fillStyle = '#ffd1ea';
-  ctx.fillText(sub, W / 2, rectY + 100);
+  for (const ln of subLines) {
+    ctx.fillText(ln, W / 2, y);
+    y += 20;
+  }
 
   if (state === 'dead') {
+    y += 14;
     ctx.fillStyle = '#fff';
     ctx.font = '14px monospace';
-    ctx.fillText('Điểm: ' + score + '  |  Kỷ lục: ' + best, W / 2, rectY + 140);
+    ctx.fillText('Điểm: ' + score + '  |  Kỷ lục: ' + best, W / 2, y);
+    y += 22;
     ctx.fillStyle = '#ffb3d9';
     ctx.font = 'bold 15px monospace';
-    ctx.fillText('[ Nhấn để chơi lại ]', W / 2, rectY + 170);
+    ctx.fillText('[ Nhấn để chơi lại ]', W / 2, y);
   }
+
+  ctx.textBaseline = 'alphabetic'; // trả lại mặc định cho các phần vẽ khác
 }
 
 function getFlapState() {
@@ -336,23 +445,22 @@ function flap() {
     state = 'playing';
     bird.vy = FLAP;
     bird.flapTimer = 0.2;
-    document.getElementById('hint').style.display = 'none';
+    spawnPoop();
     return;
   }
   if (state === 'playing') {
     bird.vy = FLAP;
     bird.flapTimer = 0.2;
+    spawnPoop();
   }
   if (state === 'dead') {
     initGame();
     state = 'idle';
     updateUI();
-    document.getElementById('hint').style.display = 'block';
   }
 }
 
 function updateUI() {
-  document.getElementById('score-display').textContent = 'Điểm: ' + score;
   document.getElementById('best-display').textContent = 'Kỷ lục: ' + best;
 }
 
@@ -396,6 +504,16 @@ function update(dt) {
     bird.y = H * 0.44 + Math.sin(frameCount * 3) * 8;
     frameCount += dt;
   }
+
+  // Cập nhật phân: rơi theo trọng lực, trôi lùi theo cảnh (khi đang chơi), mờ dần rồi biến mất
+  const worldDrift = (state === 'playing') ? PIPE_SPEED : 0;
+  for (const poop of poops) {
+    poop.vy += GRAVITY * dt;
+    poop.x  += (poop.vx - worldDrift) * dt;
+    poop.y  += poop.vy * dt;
+    poop.life -= dt;
+  }
+  poops = poops.filter(p => p.life > 0 && p.x > -20 && p.y < H - GROUND_H + 10);
 }
 
 function draw() {
@@ -404,14 +522,16 @@ function draw() {
 
   for (const p of pipes) drawPipe(p.x, p.topH, p.botY);
 
+  for (const p of poops) drawPoop(p); // vẽ phân trước để nằm sau lợn
+
   drawBird(bird.x, bird.y, getFlapState());
 
   if (state === 'playing' || state === 'dead') drawScore();
 
   if (state === 'idle') {
-    drawOverlay('PINK PIG RAMPAGE', 'Nhấn để bắt đầu bay!');
+    drawOverlay('PINK PIG RAMPAGE', 'Nhấn Space hoặc chạm vào\nmàn hình để bay!');
   } else if (state === 'dead') {
-    drawOverlay('GAME OVER', 'Chú heo đã ngã rồi!');
+    drawOverlay('GAME OVER', 'Trư hồng toang rồi!');
   }
 }
 

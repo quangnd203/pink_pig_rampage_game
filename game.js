@@ -40,7 +40,23 @@ function initGame() {
   lastTime = null;
 }
 initGame();
-best = 0;
+
+// Kỷ lục lưu trong bộ nhớ trình duyệt (localStorage) - chỉ mất khi người chơi xóa dữ liệu duyệt web
+const BEST_KEY = 'pinkPigRampageBest';
+function loadBest() {
+  try {
+    return Number(localStorage.getItem(BEST_KEY)) || 0;
+  } catch (e) {
+    return 0; // localStorage có thể bị chặn (chế độ ẩn danh) - không làm hỏng game
+  }
+}
+function saveBest() {
+  try {
+    localStorage.setItem(BEST_KEY, best);
+  } catch (e) { /* bỏ qua nếu không ghi được */ }
+}
+best = loadBest();
+updateUI(); // hiển thị kỷ lục đã lưu ngay khi mở game
 
 // Pixel flying pig drawing 🐷 (pink body, angel wings, snout)
 function drawBird(x, y, flapState) {
@@ -365,7 +381,7 @@ function update(dt) {
       if (!p.scored && p.x + PIPE_W < bird.x) {
         p.scored = true;
         score++;
-        if (score > best) best = score;
+        if (score > best) { best = score; saveBest(); }
         updateUI();
       }
     }

@@ -2,6 +2,8 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 let W, H;
+// Độ phân giải bên trong cố định: game luôn "thấy" cùng một kích thước dù màn hình/xoay ngang
+const BASE_W = 450, BASE_H = 550;
 const GRAVITY = 420;      // px/s²  - rơi chậm hơn cho dễ chơi
 const FLAP = -225;        // px/s   - vỗ cánh nhẹ và mượt hơn
 const PIPE_W = 64;
@@ -12,9 +14,9 @@ const GROUND_H = 45;
 const OSC_SPEED = 1.8;    // rad/s - tốc độ ống đung đưa lên xuống
 
 function resize() {
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width;
-  canvas.height = rect.height;
+  // Vẽ ở độ phân giải cố định; CSS lo việc co giãn hiển thị giữ tỉ lệ
+  canvas.width = BASE_W;
+  canvas.height = BASE_H;
   W = canvas.width;
   H = canvas.height;
   ctx.imageSmoothingEnabled = false;

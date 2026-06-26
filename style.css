@@ -3,22 +3,18 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #ffc0dd;/* Nền hồng bên ngoài cho máy tính */
+  background-color: #ffc0dd;/* Nền hồng làm viền khi xoay ngang */
   font-family: monospace;
   display: flex;
   justify-content: center;
-}
-@media (min-width: 768px) {
-  html, body {
-    align-items: center;
-  }
+  align-items: center; /* căn giữa cả dọc lẫn ngang, phần thừa thành viền */
 }
 #game-wrap {
   position: relative;
-  width: 100%;
-  max-width: 450px; /* Chiều rộng tối đa của khung game */
-  height: 100%;
-  max-height: 550px; /* Giới hạn chiều cao để cột không bị kéo dài */
+  /* Luôn giữ tỉ lệ dọc 9:11; co vừa màn theo cả chiều rộng lẫn chiều cao */
+  width: min(100vw, calc(100vh * 9 / 11), 450px);
+  width: min(100vw, calc(100dvh * 9 / 11), 450px);
+  aspect-ratio: 9 / 11;
   overflow: hidden;
 }
 #canvas {

@@ -1,20 +1,20 @@
 // ===== Âm thanh (sound) =====
-// Quản lý nhạc nền: bật/tắt loa, phát meme_1 khi chơi, meme_2 khi game over.
+// Dùng Web Audio API: giải mã file thành buffer PCM rồi lặp thẳng buffer đó.
+// Nhờ vậy nhạc nền lặp lại liền mạch, KHÔNG bị khựng ở điểm nối vòng lặp (lỗi của
+// thẻ <audio loop> trên iOS). Cũng tránh luôn lỗi autoplay/iOS chặn nhạc game over.
 
-const bgmPlay = new Audio('assets/sounds/meme_1.mp3');
-const bgmDead = new Audio('assets/sounds/meme_2.mp3');
-bgmPlay.loop = true;
-bgmDead.loop = false;
-// Tải sẵn để lần đầu bấm chơi là phát được ngay (không bị "hụt" meme_1)
-bgmPlay.preload = 'auto';
-bgmDead.preload = 'auto';
-
-let soundEnabled = true; // mặc định loa bật
-let audioUnlocked = false; // đã mở khóa âm thanh trong thao tác đầu tiên chưa
+let soundEnabled = true;     // mặc định loa bật
 
 const soundBtn = document.getElementById('sound-btn');
 const iconOn = document.getElementById('icon-sound-on');
 const iconOff = document.getElementById('icon-sound-off');
+
+let audioCtx = null;         // AudioContext (tạo trong thao tác đầu của người dùng)
+let bufferPlay = null;       // meme_1 đã giải mã -> lặp mượt
+let bufferDead = null;       // meme_2 đã giải mã (nhạc game over)
+let srcPlay = null;          // nguồn nhạc nền đang phát (giữ để dừng được)
+let srcDead = null;          // nguồn nhạc game over đang phát
+let wantPlayLoop = false;    // muốn phát nhạc nền nhưng buffer chưa tải xong
 
 function updateSoundIcon() {
   iconOn.style.display = soundEnabled ? '' : 'none';
@@ -22,72 +22,88 @@ function updateSoundIcon() {
 }
 updateSoundIcon();
 
+// Tải file rồi giải mã thành AudioBuffer (dùng dạng callback để chạy cả Safari cũ)
+function loadSound(url) {
+  return fetch(url)
+    .then(r => r.arrayBuffer())
+    .then(buf => new Promise((resolve, reject) => {
+      audioCtx.decodeAudioData(buf, resolve, reject);
+    }));
+}
+
+// Mở khóa + tải nhạc ngay trong cú chạm/bấm đầu tiên (bắt buộc trên iOS).
+function unlockAudio() {
+  if (audioCtx) return;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  audioCtx = new AC();
+  audioCtx.resume(); // iOS: phải resume trong user gesture
+  loadSound('assets/sounds/meme_1.mp3').then(b => {
+    bufferPlay = b;
+    if (wantPlayLoop) startPlayLoop(); // tải xong mà đang cần phát thì phát ngay
+  }).catch(() => {});
+  loadSound('assets/sounds/meme_2.mp3').then(b => { bufferDead = b; }).catch(() => {});
+}
+
+function stopPlayLoop() {
+  if (srcPlay) { try { srcPlay.stop(); } catch (e) {} srcPlay = null; }
+  wantPlayLoop = false;
+}
+function stopDead() {
+  if (srcDead) { try { srcDead.stop(); } catch (e) {} srcDead = null; }
+}
+
+// Phát nhạc nền và bật lặp liền mạch
+function startPlayLoop() {
+  if (!soundEnabled || !audioCtx || !bufferPlay) return;
+  stopPlayLoop(); // tránh phát chồng
+  srcPlay = audioCtx.createBufferSource();
+  srcPlay.buffer = bufferPlay;
+  srcPlay.loop = true;
+  srcPlay.connect(audioCtx.destination);
+  srcPlay.start();
+}
+
 // Toggle bật/tắt loa
-soundBtn.addEventListener('click', (e) => {
-  e.stopPropagation(); // không lan xuống canvas/body gây flap
+function toggleSound() {
   soundEnabled = !soundEnabled;
   updateSoundIcon();
-
-  // Nếu đang tắt loa giữa chừng thì dừng hết nhạc
-  if (!soundEnabled) {
-    bgmPlay.pause();
-    bgmPlay.currentTime = 0;
-    bgmDead.pause();
-    bgmDead.currentTime = 0;
-  }
+  if (!soundEnabled) { stopPlayLoop(); stopDead(); } // tắt giữa chừng -> dừng hết
+}
+soundBtn.addEventListener('click', (e) => {
+  e.stopPropagation(); // không lan xuống canvas/body gây flap
+  toggleSound();
 });
-
 soundBtn.addEventListener('touchstart', (e) => {
   e.stopPropagation(); // chặn touch lan ra ngoài
   e.preventDefault();
-  soundEnabled = !soundEnabled;
-  updateSoundIcon();
-
-  if (!soundEnabled) {
-    bgmPlay.pause();
-    bgmPlay.currentTime = 0;
-    bgmDead.pause();
-    bgmDead.currentTime = 0;
-  }
+  toggleSound();
 }, { passive: false });
-
-// Mở khóa âm thanh ngay trong thao tác chạm/bấm đầu tiên.
-// iOS chỉ cho phát một thẻ <audio> nếu nó từng .play() trong user gesture.
-// meme_2 (nhạc game over) phát ngoài thao tác người dùng -> phải "mồi" nó ở đây,
-// nếu không trên iPhone nó sẽ bị chặn vĩnh viễn lúc game over.
-function unlockAudio() {
-  if (audioUnlocked) return;
-  audioUnlocked = true;
-  bgmDead.play().then(() => {
-    bgmDead.pause();
-    bgmDead.currentTime = 0;
-  }).catch(() => {});
-}
 
 // Phát nhạc khi bắt đầu chơi (idle -> playing)
 function playBgm() {
   if (!soundEnabled) return;
-  bgmDead.pause();
-  bgmDead.currentTime = 0;
-  bgmPlay.currentTime = 0;
-  bgmPlay.play().catch(() => {}); // bắt lỗi autoplay policy
+  stopDead();
+  if (audioCtx) audioCtx.resume();
+  if (bufferPlay) startPlayLoop();
+  else wantPlayLoop = true; // chưa tải xong -> phát ngay khi xong
 }
 
-// Dừng nhạc chơi, phát nhạc game over
+// Dừng nhạc nền, phát nhạc game over (1 lần)
 function playDeadBgm() {
-  bgmPlay.pause();
-  bgmPlay.currentTime = 0;
-  if (!soundEnabled) return;
-  bgmDead.currentTime = 0;
-  bgmDead.play().catch(() => {});
+  stopPlayLoop();
+  if (!soundEnabled || !audioCtx || !bufferDead) return;
+  stopDead();
+  srcDead = audioCtx.createBufferSource();
+  srcDead.buffer = bufferDead;
+  srcDead.connect(audioCtx.destination);
+  srcDead.start();
 }
 
 // Dừng tất cả nhạc (khi từ dead quay về idle)
 function stopAllBgm() {
-  bgmPlay.pause();
-  bgmPlay.currentTime = 0;
-  bgmDead.pause();
-  bgmDead.currentTime = 0;
+  stopPlayLoop();
+  stopDead();
 }
 
 // Hiện/ẩn nút loa

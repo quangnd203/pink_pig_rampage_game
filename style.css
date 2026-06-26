@@ -11,11 +11,25 @@ html, body {
 }
 #game-wrap {
   position: relative;
-  /* Luôn giữ tỉ lệ dọc 9:11; co vừa màn theo cả chiều rộng lẫn chiều cao */
+  /* Mặc định (máy tính): giữ tỉ lệ dọc 9:11, co vừa màn, căn giữa */
   width: min(100vw, calc(100vh * 9 / 11), 450px);
   width: min(100vw, calc(100dvh * 9 / 11), 450px);
   aspect-ratio: 9 / 11;
   overflow: hidden;
+}
+
+/* Điện thoại dọc: khung kéo cao lấp khoảng trống phía trên, chừa khoảng dưới */
+@media (orientation: portrait) and (max-width: 600px) {
+  html, body {
+    align-items: flex-start; /* dồn game lên trên, khoảng trống dồn xuống dưới */
+  }
+  #game-wrap {
+    width: 100vw;
+    max-width: none;
+    aspect-ratio: auto;      /* bỏ khóa tỉ lệ để khung cao lên được */
+    height: 85vh;
+    height: 85dvh;           /* lấp ~85% chiều cao, chừa ~15% khoảng trống dưới */
+  }
 }
 #canvas {
   display: block;

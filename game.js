@@ -2,8 +2,6 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 let W, H;
-// Độ phân giải bên trong cố định: game luôn "thấy" cùng một kích thước dù màn hình/xoay ngang
-const BASE_W = 450, BASE_H = 550;
 const GRAVITY = 420;      // px/s²  - rơi chậm hơn cho dễ chơi
 const FLAP = -225;        // px/s   - vỗ cánh nhẹ và mượt hơn
 const PIPE_W = 64;
@@ -14,9 +12,10 @@ const GROUND_H = 45;
 const OSC_SPEED = 1.8;    // rad/s - tốc độ ống đung đưa lên xuống
 
 function resize() {
-  // Vẽ ở độ phân giải cố định; CSS lo việc co giãn hiển thị giữ tỉ lệ
-  canvas.width = BASE_W;
-  canvas.height = BASE_H;
+  // Canvas vẽ đúng theo kích thước hiển thị của khung (CSS quyết định khung cao/thấp)
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = Math.round(rect.width);
+  canvas.height = Math.round(rect.height);
   W = canvas.width;
   H = canvas.height;
   ctx.imageSmoothingEnabled = false;
@@ -442,7 +441,12 @@ function checkCollision() {
   return false;
 }
 
+const rotateNotice = document.getElementById('rotate-notice');
+
 function flap() {
+  // Bỏ qua thao tác khi đang hiện thông báo "xoay dọc" (điện thoại nằm ngang)
+  if (rotateNotice && getComputedStyle(rotateNotice).display !== 'none') return;
+
   if (state === 'idle') {
     state = 'playing';
     bird.vy = FLAP;

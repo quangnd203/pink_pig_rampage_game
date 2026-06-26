@@ -51,6 +51,12 @@ function update(dt) {
     poop.life -= dt;
   }
   poops = poops.filter(p => p.life > 0 && p.x > -20 && p.y < H - GROUND_H + 10);
+
+  // Ải sương mù: trong vùng điểm thì mây kéo vào + sương hiện dần (~0.9s),
+  // ra khỏi vùng thì mây trôi đi + sương tan (~0.6s).
+  const inFogZone = (state === 'playing' && score >= 25 && score <= 34);
+  if (inFogZone) fogIntro = Math.min(1, fogIntro + dt / 1.8); // mây kéo vào từ tốn ~1.8s
+  else           fogIntro = Math.max(0, fogIntro - dt / 0.9);
 }
 
 function draw() {
@@ -62,6 +68,12 @@ function draw() {
   for (const p of poops) drawPoop(p); // vẽ phân trước để nằm sau lợn
 
   drawBird(bird.x, bird.y);
+
+  // Ải sương mù 25-34đ: mây kéo vào từ 2 bên, sương mù dần rồi tan khi qua 34đ
+  if (fogIntro > 0) {
+    const t = Math.max(0, Math.min(1, (score - 25) / 9)); // 0 ở 25đ -> 1 ở 34đ
+    drawFog(bird.x, bird.y, 0.78 + t * 0.22, fogIntro);   // mù dần: 0.78 -> 1.0
+  }
 
   if (state === 'playing' || state === 'dead') drawScore();
 

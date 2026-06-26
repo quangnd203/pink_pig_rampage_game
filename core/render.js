@@ -225,6 +225,73 @@ function drawBackground() {
 }
 
 // Draw Score
+// Vẽ một mảng mây bồng bềnh (nhiều cụm tròn mềm chồng lên nhau) tại (cx, cy).
+function drawCloudMass(cx, cy, scale, alpha) {
+  const puffs = [
+    [0, 0, 62], [-48, 10, 46], [48, 8, 50], [-22, -26, 42],
+    [26, -22, 44], [74, 18, 38], [-74, 16, 38]
+  ];
+  for (const [dx, dy, r] of puffs) {
+    const px = cx + dx * scale, py = cy + dy * scale, pr = r * scale;
+    const g = ctx.createRadialGradient(px, py, 0, px, py, pr);
+    g.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
+    g.addColorStop(0.7, `rgba(248, 245, 252, ${alpha * 0.85})`);
+    g.addColorStop(1, 'rgba(248, 245, 252, 0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(px - pr, py - pr, pr * 2, pr * 2);
+  }
+}
+
+// Ải sương mù: mây kéo vào từ 2 bên rồi phủ một lớp sương TRẮNG mù mịt, dày ở rìa
+// và chừa một quầng nhìn rõ quanh con heo.
+//  - intensity (0..1): độ dày sương (để "mù dần" theo điểm).
+//  - intro (0..1): tiến trình mây kéo vào / sương hiện dần (0 = chưa có, 1 = đầy đủ).
+function drawFog(cx, cy, intensity, intro) {
+  const FOG = '244, 240, 250'; // trắng hơi ánh tím lạnh cho hợp tông hồng
+  const a = intensity * intro; // độ đậm tổng, hiện/tan theo intro
+
+  // 0. Mây kéo vào từ hai bên: off = 1 (ngoài màn) -> 0 (đã vào vị trí ở sát mép)
+  const off = 1 - intro;
+  const s = W / 410;             // tỉ lệ mây theo bề ngang màn
+  const cloudA = intro * 0.5;    // mờ vừa phải để vẫn thấy lờ mờ con heo phía sau
+  // mép trái (trôi vào từ trái) - tiến sâu vào trong màn
+  drawCloudMass(W * 0.16 - off * W * 0.85, H * 0.30, s, cloudA);
+  drawCloudMass(W * 0.08 - off * W * 0.85, H * 0.70, s * 1.1, cloudA);
+  // mép phải (trôi vào từ phải)
+  drawCloudMass(W * 0.84 + off * W * 0.85, H * 0.40, s, cloudA);
+  drawCloudMass(W * 0.92 + off * W * 0.85, H * 0.74, s * 1.1, cloudA);
+
+  // 1. Màn sương trắng phủ đều toàn cảnh (mờ vừa phải, vẫn thấy mây bay vào)
+  ctx.fillStyle = `rgba(${FOG}, ${0.24 * a})`;
+  ctx.fillRect(0, 0, W, H);
+
+  // 2. Những cuộn sương trắng trôi ngang cho cảm giác mù mịt, chuyển động
+  for (let i = 0; i < 4; i++) {
+    const fx = ((frameCount * (10 + i * 5) + i * 200) % (W + 320)) - 160;
+    const fy = H * (0.18 + i * 0.22);
+    const r = 130 + i * 35;
+    const blob = ctx.createRadialGradient(fx, fy, 0, fx, fy, r);
+    blob.addColorStop(0, `rgba(255, 255, 255, ${0.3 * a})`);
+    blob.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = blob;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // 3. Sương mù MỊT ở rìa, chỉ chừa một quầng nhỏ quanh heo -> ống tới gần mới thấy
+  const g = ctx.createRadialGradient(cx, cy, 38, cx, cy, 38 + 120);
+  g.addColorStop(0, `rgba(${FOG}, 0)`);              // sát heo: nhìn rõ
+  g.addColorStop(1, `rgba(${FOG}, ${0.8 * a})`);     // rìa: trắng mù
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // 4. Đậm thêm về phía TRƯỚC mặt heo (bên phải) để ống kế tiếp hiện ra muộn hơn
+  const fwd = ctx.createLinearGradient(cx, 0, W, 0);
+  fwd.addColorStop(0, `rgba(${FOG}, 0)`);            // ngay trước heo: còn thấy
+  fwd.addColorStop(1, `rgba(${FOG}, ${0.32 * a})`);  // càng xa về phải càng mù
+  ctx.fillStyle = fwd;
+  ctx.fillRect(0, 0, W, H);
+}
+
 function drawScore() {
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 36px monospace';

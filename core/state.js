@@ -3,6 +3,7 @@
 
 let state = 'idle';
 let bird, pipes, poops, score, best, frameCount, bgOffset, pipeTimer, lastTime;
+let fogIntro; // tiến trình ải sương (0..1): mây kéo vào + sương hiện dần
 
 function initGame() {
   bird = { x: 80, y: H * 0.44, vy: 0 };
@@ -13,6 +14,7 @@ function initGame() {
   bgOffset = 0;
   pipeTimer = 0;
   lastTime = null;
+  fogIntro = 0;
 }
 initGame();
 

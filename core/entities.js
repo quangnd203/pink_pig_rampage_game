@@ -19,7 +19,8 @@ function pipeAmplitude() {
   if (score < 25) return Math.random() < 0.5 ? 28 : 0;   // 10-24đ: thỉnh thoảng 1 ống nhúc nhích nhẹ
   if (score <= 34) return 0;                             // 25-34đ: ải sương mù, ống đứng im
   if (score <= 60) return 46;                            // 35-60đ: nhiều ống đung đưa biên độ lớn
-  return 0;                                              // >60đ: tạm đứng im - dành chỗ cho thử thách mới
+  if (score <= 75) return 0;                             // 61-75đ: ải sương mù đợt 2, ống đứng im
+  return 64;                                             // >75đ: ống đung đưa biên độ rất mạnh
 }
 
 function spawnPipe() {

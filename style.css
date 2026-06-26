@@ -59,3 +59,36 @@ html, body {
   pointer-events: none;
   text-align: center;
 }
+
+/* Lớp phủ "xoay dọc" - ẩn mặc định */
+#rotate-notice {
+  display: none;
+}
+/* Chỉ hiện trên thiết bị nằm ngang & màn thấp (điện thoại), không ảnh hưởng máy tính */
+@media (orientation: landscape) and (max-height: 500px) {
+  #rotate-notice {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background-color: #ffc0dd;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+  }
+  .rotate-icon {
+    font-size: 56px;
+    animation: rotateHint 1.6s ease-in-out infinite;
+  }
+  .rotate-inner p {
+    margin-top: 16px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #7a2a52;
+  }
+}
+@keyframes rotateHint {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-90deg); }
+}

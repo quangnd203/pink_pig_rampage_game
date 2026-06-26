@@ -1,12 +1,6 @@
 // ===== Đối tượng trong game =====
 // Logic của lợn (phân, trạng thái vỗ), ống (sinh ra, độ khó) và va chạm.
 
-function getFlapState() {
-  if (bird.flapTimer > 0) return 'up';
-  if (bird.vy > 3) return 'down';
-  return 'mid';
-}
-
 // Lợn ị ra phân khi vỗ cánh 💩 (bắn ra phía sau-dưới rồi rơi theo trọng lực)
 function spawnPoop() {
   poops.push({

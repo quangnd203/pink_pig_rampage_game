@@ -12,7 +12,6 @@ function flap() {
   if (state === 'idle') {
     state = 'playing';
     bird.vy = FLAP;
-    bird.flapTimer = 0.2;
     spawnPoop();
     hideSoundBtn();  // ẩn icon loa khi bắt đầu chơi
     playBgm();       // phát meme_1.mp3 loop
@@ -20,7 +19,6 @@ function flap() {
   }
   if (state === 'playing') {
     bird.vy = FLAP;
-    bird.flapTimer = 0.2;
     spawnPoop();
   }
   if (state === 'dead') {

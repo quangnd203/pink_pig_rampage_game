@@ -8,7 +8,6 @@ function update(dt) {
 
     bird.vy += GRAVITY * dt;
     bird.y  += bird.vy * dt;
-    if (bird.flapTimer > 0) bird.flapTimer -= dt;
 
     pipeTimer += dt;
     if (pipeTimer >= PIPE_INTERVAL) {
@@ -62,7 +61,7 @@ function draw() {
 
   for (const p of poops) drawPoop(p); // vẽ phân trước để nằm sau lợn
 
-  drawBird(bird.x, bird.y, getFlapState());
+  drawBird(bird.x, bird.y);
 
   if (state === 'playing' || state === 'dead') drawScore();
 

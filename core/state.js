@@ -5,7 +5,7 @@ let state = 'idle';
 let bird, pipes, poops, score, best, frameCount, bgOffset, pipeTimer, lastTime;
 
 function initGame() {
-  bird = { x: 80, y: H * 0.44, vy: 0, frame: 0, flapTimer: 0 };
+  bird = { x: 80, y: H * 0.44, vy: 0 };
   pipes = [];
   poops = [];
   score = 0;

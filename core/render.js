@@ -1,8 +1,8 @@
 // ===== Phần vẽ (render) =====
 // Toàn bộ hàm vẽ lên canvas: lợn, phân, ống, nền/sao, điểm số, bảng overlay.
 
-// Pixel flying pig drawing 🐷 (pink body, angel wings, snout)
-function drawBird(x, y, flapState) {
+// Pixel flying pig drawing 🐷 (pink body, snout) - bay bằng cách ị, không cánh
+function drawBird(x, y) {
   const bx = Math.round(x - 14);
   const by = Math.round(y - 12);
 
@@ -37,22 +37,6 @@ function drawBird(x, y, flapState) {
   ];
   ctx.fillStyle = PINK;
   body.forEach(([rx,ry,rw,rh]) => ctx.fillRect(bx+rx, by+ry, rw, rh));
-
-  // Angel wings - white (cánh thiên thần vỗ theo trạng thái)
-  ctx.fillStyle = '#ffffff';
-  if (flapState === 'up') {
-    ctx.fillRect(bx+4, by+2, 12, 6);
-    ctx.fillRect(bx+2, by, 8, 5);
-  } else if (flapState === 'down') {
-    ctx.fillRect(bx+4, by+15, 12, 6);
-    ctx.fillRect(bx+2, by+18, 8, 5);
-  } else {
-    ctx.fillRect(bx+3, by+8, 13, 7);
-  }
-  // wing outline
-  ctx.strokeStyle = '#d9d9e0';
-  ctx.lineWidth = 1;
-  if (flapState === 'mid') ctx.strokeRect(bx+3, by+8, 13, 7);
 
   // Snout - mõm lợn (phía trước, hướng bay)
   ctx.fillStyle = SNOUT;

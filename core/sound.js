@@ -38,6 +38,13 @@ function unlockAudio() {
   if (!AC) return;
   audioCtx = new AC();
   audioCtx.resume(); // iOS: phải resume trong user gesture
+  // iOS: chỉ resume() là chưa đủ — phải phát một âm thanh NGAY trong cú chạm này để
+  // mở khóa context. Phát 1 buffer rỗng (im lặng) để ép mở khóa, vì meme_1 còn đang
+  // tải bất đồng bộ (xong sau khi chạm kết thúc) nên không kịp dùng để mở khóa.
+  const silent = audioCtx.createBufferSource();
+  silent.buffer = audioCtx.createBuffer(1, 1, 22050);
+  silent.connect(audioCtx.destination);
+  silent.start(0);
   loadSound('assets/sounds/meme_1.mp3').then(b => {
     bufferPlay = b;
     if (wantPlayLoop) startPlayLoop(); // tải xong mà đang cần phát thì phát ngay

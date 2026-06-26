@@ -14,7 +14,15 @@ let bufferPlay = null;       // meme_1 đã giải mã -> lặp mượt
 let bufferDead = null;       // meme_2 đã giải mã (nhạc game over)
 let srcPlay = null;          // nguồn nhạc nền đang phát (giữ để dừng được)
 let srcDead = null;          // nguồn nhạc game over đang phát
-let wantPlayLoop = false;    // muốn phát nhạc nền nhưng buffer chưa tải xong
+
+// Chạy cb khi context đã thực sự "running". Nếu đang ngủ thì resume rồi mới chạy.
+// (resume() trên Safari cũ có thể không trả về Promise -> kiểm tra .then cho chắc)
+function whenRunning(cb) {
+  if (!audioCtx) return;
+  if (audioCtx.state === 'running') { cb(); return; }
+  const p = audioCtx.resume();
+  if (p && p.then) p.then(cb).catch(() => {}); else cb();
+}
 
 function updateSoundIcon() {
   iconOn.style.display = soundEnabled ? '' : 'none';
@@ -41,7 +49,9 @@ function initAudio() {
   audioCtx = new AC(); // sinh ra ở trạng thái "suspended" tới khi resume trong user gesture
   loadSound('assets/sounds/meme_1.mp3').then(b => {
     bufferPlay = b;
-    if (wantPlayLoop) startPlayLoop(); // lỡ chạm trước khi tải xong thì phát ngay khi xong
+    // iOS hay giải mã trễ (xong sau cú chạm đầu): hễ giải mã xong mà người chơi đang
+    // trong ván thì phát ngay, không lệ thuộc vào cờ dễ bị reset lúc game over.
+    if (state === 'playing') whenRunning(startPlayLoop);
   }).catch(() => {});
   loadSound('assets/sounds/meme_2.mp3').then(b => { bufferDead = b; }).catch(() => {});
 }
@@ -61,7 +71,6 @@ function unlockAudio() {
 
 function stopPlayLoop() {
   if (srcPlay) { try { srcPlay.stop(); } catch (e) {} srcPlay = null; }
-  wantPlayLoop = false;
 }
 function stopDead() {
   if (srcDead) { try { srcDead.stop(); } catch (e) {} srcDead = null; }
@@ -70,7 +79,6 @@ function stopDead() {
 // Phát nhạc nền và bật lặp liền mạch
 function startPlayLoop() {
   if (!soundEnabled || !audioCtx || !bufferPlay) return;
-  audioCtx.resume();
   stopPlayLoop(); // tránh phát chồng
   srcPlay = audioCtx.createBufferSource();
   srcPlay.buffer = bufferPlay;
@@ -97,11 +105,11 @@ soundBtn.addEventListener('touchstart', (e) => {
 
 // Phát nhạc khi bắt đầu chơi (idle -> playing)
 function playBgm() {
-  if (!soundEnabled) return;
+  if (!soundEnabled || !audioCtx) return;
   stopDead();
-  if (audioCtx) audioCtx.resume();
-  if (bufferPlay) startPlayLoop();
-  else wantPlayLoop = true; // chưa tải xong -> phát ngay khi xong
+  // Nếu buffer đã sẵn sàng thì phát ngay (khi context running). Nếu chưa giải mã xong,
+  // hàm giải mã ở initAudio sẽ tự phát khi xong vì lúc đó state === 'playing'.
+  if (bufferPlay) whenRunning(startPlayLoop);
 }
 
 // Dừng nhạc nền, phát nhạc game over (lặp lại)

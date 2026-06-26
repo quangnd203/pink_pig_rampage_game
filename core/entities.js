@@ -17,7 +17,8 @@ function spawnPoop() {
 function pipeAmplitude() {
   if (score < 10) return 0;                              // 0-10đ: ống đứng im, cho làm quen
   if (score < 25) return Math.random() < 0.5 ? 28 : 0;   // 10-25đ: thỉnh thoảng 1 ống nhúc nhích nhẹ
-  return 46;                                             // 25+đ: nhiều ống đung đưa biên độ lớn
+  if (score <= 50) return 46;                            // 25-50đ: nhiều ống đung đưa biên độ lớn
+  return 0;                                              // >50đ: tạm đứng im - dành chỗ cho thử thách mới
 }
 
 function spawnPipe() {

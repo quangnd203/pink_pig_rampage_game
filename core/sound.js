@@ -9,7 +9,7 @@ const soundBtn = document.getElementById('sound-btn');
 const iconOn = document.getElementById('icon-sound-on');
 const iconOff = document.getElementById('icon-sound-off');
 
-let audioCtx = null;         // AudioContext (tạo trong thao tác đầu của người dùng)
+let audioCtx = null;         // AudioContext (tạo sớm, ngủ đông tới khi người dùng chạm)
 let bufferPlay = null;       // meme_1 đã giải mã -> lặp mượt
 let bufferDead = null;       // meme_2 đã giải mã (nhạc game over)
 let srcPlay = null;          // nguồn nhạc nền đang phát (giữ để dừng được)
@@ -31,25 +31,32 @@ function loadSound(url) {
     }));
 }
 
-// Mở khóa + tải nhạc ngay trong cú chạm/bấm đầu tiên (bắt buộc trên iOS).
-function unlockAudio() {
+// Tạo context + GIẢI MÃ sẵn cả 2 file NGAY khi vào trang.
+// Giải mã không cần thao tác người dùng (chỉ phát mới cần), nên làm sớm để đến lúc
+// người chơi chạm là buffer đã sẵn sàng -> phát được ngay trong cú chạm đó (iOS cần vậy).
+function initAudio() {
   if (audioCtx) return;
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return;
-  audioCtx = new AC();
-  audioCtx.resume(); // iOS: phải resume trong user gesture
-  // iOS: chỉ resume() là chưa đủ — phải phát một âm thanh NGAY trong cú chạm này để
-  // mở khóa context. Phát 1 buffer rỗng (im lặng) để ép mở khóa, vì meme_1 còn đang
-  // tải bất đồng bộ (xong sau khi chạm kết thúc) nên không kịp dùng để mở khóa.
+  audioCtx = new AC(); // sinh ra ở trạng thái "suspended" tới khi resume trong user gesture
+  loadSound('assets/sounds/meme_1.mp3').then(b => {
+    bufferPlay = b;
+    if (wantPlayLoop) startPlayLoop(); // lỡ chạm trước khi tải xong thì phát ngay khi xong
+  }).catch(() => {});
+  loadSound('assets/sounds/meme_2.mp3').then(b => { bufferDead = b; }).catch(() => {});
+}
+initAudio(); // chạy ngay khi nạp file này
+
+// Mở khóa âm thanh trong cú chạm/bấm đầu tiên (bắt buộc trên iOS).
+function unlockAudio() {
+  if (!audioCtx) { initAudio(); }
+  if (!audioCtx) return;
+  audioCtx.resume(); // iOS: đánh thức context trong user gesture
+  // Phát thêm 1 buffer im lặng để chắc chắn context được mở khóa ngay trong cú chạm.
   const silent = audioCtx.createBufferSource();
   silent.buffer = audioCtx.createBuffer(1, 1, 22050);
   silent.connect(audioCtx.destination);
   silent.start(0);
-  loadSound('assets/sounds/meme_1.mp3').then(b => {
-    bufferPlay = b;
-    if (wantPlayLoop) startPlayLoop(); // tải xong mà đang cần phát thì phát ngay
-  }).catch(() => {});
-  loadSound('assets/sounds/meme_2.mp3').then(b => { bufferDead = b; }).catch(() => {});
 }
 
 function stopPlayLoop() {
@@ -63,6 +70,7 @@ function stopDead() {
 // Phát nhạc nền và bật lặp liền mạch
 function startPlayLoop() {
   if (!soundEnabled || !audioCtx || !bufferPlay) return;
+  audioCtx.resume();
   stopPlayLoop(); // tránh phát chồng
   srcPlay = audioCtx.createBufferSource();
   srcPlay.buffer = bufferPlay;

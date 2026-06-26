@@ -7,7 +7,7 @@ const ctx = canvas.getContext('2d');
 let W, H;
 const GRAVITY = 420;      // px/s²  - rơi chậm hơn cho dễ chơi
 const FLAP = -225;        // px/s   - vỗ cánh nhẹ và mượt hơn
-const PIPE_W = 64;
+const PIPE_W = 60;
 const GAP = 165;
 const PIPE_SPEED = 150;   // px/s   (= 2.5 × 60)
 const PIPE_INTERVAL = 80 / 60; // giây giữa 2 ống (= 80 frames / 60fps)

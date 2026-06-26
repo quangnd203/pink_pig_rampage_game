@@ -49,8 +49,8 @@ function checkCollision() {
   if (bird.y - 12 <= 0) return true;
 
   for (const p of pipes) {
-    const cx = p.x - 4, cw = PIPE_W + 8;
-    if (bx + bw > cx + 4 && bx < cx + cw - 4) {
+    const cx = p.x - 2, cw = PIPE_W + 4;
+    if (bx + bw > cx + 2 && bx < cx + cw - 2) {
       if (by < p.topH || by + bh > p.botY) return true;
     }
   }

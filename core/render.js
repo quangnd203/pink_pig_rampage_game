@@ -96,7 +96,7 @@ function drawPoop(p) {
 
 // Pipe drawing with pixel Mario-style caps
 function drawPipe(px, topH, botY) {
-  const capH = 18, capW = PIPE_W + 8, capX = px - 4;
+  const capH = 18, capW = PIPE_W + 4, capX = px - 2;
 
   // Top pipe body
   const tg = ctx.createLinearGradient(px, 0, px + PIPE_W, 0);

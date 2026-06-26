@@ -54,7 +54,8 @@ function update(dt) {
 
   // Ải sương mù: trong vùng điểm thì mây kéo vào + sương hiện dần (~0.9s),
   // ra khỏi vùng thì mây trôi đi + sương tan (~0.6s).
-  const inFogZone = (state === 'playing' && score >= 25 && score <= 34);
+  const inFogZone = (state === 'playing' &&
+    ((score >= 25 && score <= 34) || (score >= 61 && score <= 75)));
   if (inFogZone) fogIntro = Math.min(1, fogIntro + dt / 1.8); // mây kéo vào từ tốn ~1.8s
   else           fogIntro = Math.max(0, fogIntro - dt / 0.9);
 }
@@ -69,10 +70,11 @@ function draw() {
 
   drawBird(bird.x, bird.y);
 
-  // Ải sương mù 25-34đ: mây kéo vào từ 2 bên, sương mù dần rồi tan khi qua 34đ
+  // Ải sương mù (25-34đ và 61-75đ): mây kéo vào 2 bên, mù dần rồi tan khi qua vùng
   if (fogIntro > 0) {
-    const t = Math.max(0, Math.min(1, (score - 25) / 9)); // 0 ở 25đ -> 1 ở 34đ
-    drawFog(bird.x, bird.y, 0.78 + t * 0.22, fogIntro);   // mù dần: 0.78 -> 1.0
+    const raw = (score >= 61) ? (score - 61) / 14 : (score - 25) / 9; // vùng 2 / vùng 1
+    const t = Math.max(0, Math.min(1, raw));            // 0 ở đầu vùng -> 1 ở cuối vùng
+    drawFog(bird.x, bird.y, 0.78 + t * 0.22, fogIntro); // mù dần: 0.78 -> 1.0
   }
 
   if (state === 'playing' || state === 'dead') drawScore();

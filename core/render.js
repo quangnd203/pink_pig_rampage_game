@@ -254,12 +254,14 @@ function drawFog(cx, cy, intensity, intro) {
   const off = 1 - intro;
   const s = W / 410;             // tỉ lệ mây theo bề ngang màn
   const cloudA = intro * 0.5;    // mờ vừa phải để vẫn thấy lờ mờ con heo phía sau
+  // nhấp nhô lên xuống nhẹ nhàng, mỗi mảng lệch pha cho tự nhiên
+  const bob = ph => Math.sin(frameCount * 1.3 + ph) * 7;
   // mép trái (trôi vào từ trái) - tiến sâu vào trong màn
-  drawCloudMass(W * 0.16 - off * W * 0.85, H * 0.30, s, cloudA);
-  drawCloudMass(W * 0.08 - off * W * 0.85, H * 0.70, s * 1.1, cloudA);
+  drawCloudMass(W * 0.16 - off * W * 0.85, H * 0.30 + bob(0),   s, cloudA);
+  drawCloudMass(W * 0.08 - off * W * 0.85, H * 0.70 + bob(1.7), s * 1.1, cloudA);
   // mép phải (trôi vào từ phải)
-  drawCloudMass(W * 0.84 + off * W * 0.85, H * 0.40, s, cloudA);
-  drawCloudMass(W * 0.92 + off * W * 0.85, H * 0.74, s * 1.1, cloudA);
+  drawCloudMass(W * 0.84 + off * W * 0.85, H * 0.40 + bob(3.0), s, cloudA);
+  drawCloudMass(W * 0.92 + off * W * 0.85, H * 0.74 + bob(4.5), s * 1.1, cloudA);
 
   // 1. Màn sương trắng phủ đều toàn cảnh (mờ vừa phải, vẫn thấy mây bay vào)
   ctx.fillStyle = `rgba(${FOG}, ${0.24 * a})`;
@@ -287,7 +289,7 @@ function drawFog(cx, cy, intensity, intro) {
   // 4. Đậm thêm về phía TRƯỚC mặt heo (bên phải) để ống kế tiếp hiện ra muộn hơn
   const fwd = ctx.createLinearGradient(cx, 0, W, 0);
   fwd.addColorStop(0, `rgba(${FOG}, 0)`);            // ngay trước heo: còn thấy
-  fwd.addColorStop(1, `rgba(${FOG}, ${0.32 * a})`);  // càng xa về phải càng mù
+  fwd.addColorStop(1, `rgba(${FOG}, ${0.4 * a})`);   // càng xa về phải càng mù
   ctx.fillStyle = fwd;
   ctx.fillRect(0, 0, W, H);
 }

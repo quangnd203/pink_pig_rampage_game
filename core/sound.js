@@ -5,8 +5,12 @@ const bgmPlay = new Audio('assets/sounds/meme_1.mp3');
 const bgmDead = new Audio('assets/sounds/meme_2.mp3');
 bgmPlay.loop = true;
 bgmDead.loop = false;
+// Tải sẵn để lần đầu bấm chơi là phát được ngay (không bị "hụt" meme_1)
+bgmPlay.preload = 'auto';
+bgmDead.preload = 'auto';
 
 let soundEnabled = true; // mặc định loa bật
+let audioUnlocked = false; // đã mở khóa âm thanh trong thao tác đầu tiên chưa
 
 const soundBtn = document.getElementById('sound-btn');
 const iconOn = document.getElementById('icon-sound-on');
@@ -46,6 +50,19 @@ soundBtn.addEventListener('touchstart', (e) => {
     bgmDead.currentTime = 0;
   }
 }, { passive: false });
+
+// Mở khóa âm thanh ngay trong thao tác chạm/bấm đầu tiên.
+// iOS chỉ cho phát một thẻ <audio> nếu nó từng .play() trong user gesture.
+// meme_2 (nhạc game over) phát ngoài thao tác người dùng -> phải "mồi" nó ở đây,
+// nếu không trên iPhone nó sẽ bị chặn vĩnh viễn lúc game over.
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  bgmDead.play().then(() => {
+    bgmDead.pause();
+    bgmDead.currentTime = 0;
+  }).catch(() => {});
+}
 
 // Phát nhạc khi bắt đầu chơi (idle -> playing)
 function playBgm() {

@@ -7,6 +7,8 @@ function flap() {
   // Bỏ qua thao tác khi đang hiện thông báo "xoay dọc" (điện thoại nằm ngang)
   if (rotateNotice && getComputedStyle(rotateNotice).display !== 'none') return;
 
+  unlockAudio(); // mở khóa âm thanh ngay lần tương tác đầu (cho iOS phát được meme_2)
+
   if (state === 'idle') {
     state = 'playing';
     bird.vy = FLAP;

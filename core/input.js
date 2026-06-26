@@ -12,6 +12,8 @@ function flap() {
     bird.vy = FLAP;
     bird.flapTimer = 0.2;
     spawnPoop();
+    hideSoundBtn();  // ẩn icon loa khi bắt đầu chơi
+    playBgm();       // phát meme_1.mp3 loop
     return;
   }
   if (state === 'playing') {
@@ -20,9 +22,11 @@ function flap() {
     spawnPoop();
   }
   if (state === 'dead') {
+    stopAllBgm();    // dừng hết nhạc
     initGame();
     state = 'idle';
     updateUI();
+    showSoundBtn();  // hiện lại icon loa ở màn chờ
   }
 }
 

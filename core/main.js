@@ -35,6 +35,7 @@ function update(dt) {
 
     if (checkCollision()) {
       state = 'dead';
+      playDeadBgm();  // dừng meme_1, phát meme_2
       updateUI();
     }
   } else if (state === 'idle') {

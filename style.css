@@ -30,6 +30,9 @@ html, body {
     height: 85vh;
     height: 85dvh;           /* lấp ~85% chiều cao, chừa ~15% khoảng trống dưới */
   }
+  #ui-bar {
+    justify-content: space-between; /* kỷ lục trái, loa phải */
+  }
 }
 #canvas {
   display: block;
@@ -42,11 +45,32 @@ html, body {
   position: absolute;
   top: 16px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   width: 100%;
   padding: 0 20px;
   z-index: 10;
+  gap: 12px;
+}
+#sound-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  color: #fff;
+  filter: drop-shadow(1.5px 1.5px 0px #7a2a52);
+  transition: transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
+#sound-btn:hover {
+  transform: scale(1.15);
+}
+#sound-btn:active {
+  transform: scale(0.92);
 }
 #score-display {
   font-size: 20px;

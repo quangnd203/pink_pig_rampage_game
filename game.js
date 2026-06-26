@@ -2,8 +2,8 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 let W, H;
-const GRAVITY = 504;      // px/s²  (= 0.14 × 60²)
-const FLAP = -240;        // px/s   (= -4 × 60)
+const GRAVITY = 420;      // px/s²  - rơi chậm hơn cho dễ chơi
+const FLAP = -225;        // px/s   - vỗ cánh nhẹ và mượt hơn
 const PIPE_W = 64;
 const GAP = 165;
 const PIPE_SPEED = 150;   // px/s   (= 2.5 × 60)

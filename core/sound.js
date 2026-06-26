@@ -89,13 +89,14 @@ function playBgm() {
   else wantPlayLoop = true; // chưa tải xong -> phát ngay khi xong
 }
 
-// Dừng nhạc nền, phát nhạc game over (1 lần)
+// Dừng nhạc nền, phát nhạc game over (lặp lại)
 function playDeadBgm() {
   stopPlayLoop();
   if (!soundEnabled || !audioCtx || !bufferDead) return;
   stopDead();
   srcDead = audioCtx.createBufferSource();
   srcDead.buffer = bufferDead;
+  srcDead.loop = true;
   srcDead.connect(audioCtx.destination);
   srcDead.start();
 }
